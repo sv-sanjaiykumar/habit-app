@@ -6,7 +6,7 @@ class Habit {
   final String description;
   final DateTime createdAt;
   final DateTime? deadline;
-  bool isCompleted;
+  final bool isCompleted;
 
   Habit({
     required this.id,
@@ -17,15 +17,15 @@ class Habit {
     this.isCompleted = false,
   });
 
-  // If you're working with Firestore, you'll want fromMap and toMap methods:
-
   factory Habit.fromMap(Map<String, dynamic> data, String docId) {
     return Habit(
       id: docId,
       title: data['title'] ?? '',
       description: data['description'] ?? '',
       createdAt: (data['createdAt'] as Timestamp).toDate(),
-      deadline: data['deadline'] != null ? (data['deadline'] as Timestamp).toDate() : null,
+      deadline: data['deadline'] != null
+          ? (data['deadline'] as Timestamp).toDate()
+          : null,
       isCompleted: data['isCompleted'] ?? false,
     );
   }
@@ -38,5 +38,16 @@ class Habit {
       'deadline': deadline,
       'isCompleted': isCompleted,
     };
+  }
+
+  Habit copyWith({bool? isCompleted}) {
+    return Habit(
+      id: id,
+      title: title,
+      description: description,
+      createdAt: createdAt,
+      deadline: deadline,
+      isCompleted: isCompleted ?? this.isCompleted,
+    );
   }
 }

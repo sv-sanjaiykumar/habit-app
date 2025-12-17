@@ -5,7 +5,8 @@ class FirebaseService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Sign in
+  // ---------------- AUTH ----------------
+
   Future<User?> signIn(String email, String password) async {
     try {
       final cred = await _auth.signInWithEmailAndPassword(
@@ -18,7 +19,6 @@ class FirebaseService {
     }
   }
 
-  // Sign up and create user document
   Future<User?> signUp(String email, String password) async {
     try {
       final cred = await _auth.createUserWithEmailAndPassword(
@@ -26,10 +26,9 @@ class FirebaseService {
         password: password.trim(),
       );
 
-      // Create Firestore user document
       await _firestore.collection('users').doc(cred.user!.uid).set({
         'email': email,
-        'name': '', // <-- add this line
+        'name': '',
         'createdAt': FieldValue.serverTimestamp(),
       });
 
@@ -39,22 +38,40 @@ class FirebaseService {
     }
   }
 
+  User? get currentUser => _auth.currentUser;
 
-  // Add habit with optional deadline
-  Future<void> addHabit(String title, String description, [DateTime? deadline]) async {
+  Future<void> signOut() async {
+    await _auth.signOut();
+  }
+
+  // ---------------- HABITS ----------------
+
+  Future<void> addHabit(
+      String title,
+      String description, [
+        DateTime? deadline,
+      ]) async {
     final user = _auth.currentUser;
     if (user == null) throw Exception('No user signed in');
 
-    final userDoc = _firestore.collection('users').doc(user.uid);
-    await userDoc.collection('habits').add({
+    final Map<String, dynamic> habitData = {
       'title': title,
       'description': description,
       'createdAt': FieldValue.serverTimestamp(),
-      if (deadline != null) 'deadline': deadline,
-    });
+      'isCompleted': false,
+    };
+
+    if (deadline != null) {
+      habitData['deadline'] = deadline;
+    }
+
+    await _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('habits')
+        .add(habitData);
   }
 
-  // Fetch habits with ID and optional deadline
   Future<List<Map<String, dynamic>>> fetchUserHabits() async {
     final user = _auth.currentUser;
     if (user == null) throw Exception('No user signed in');
@@ -74,30 +91,22 @@ class FirebaseService {
         'description': data['description'] ?? '',
         'deadline': data['deadline'],
         'createdAt': data['createdAt'],
+        'isCompleted': data['isCompleted'] ?? false,
       };
     }).toList();
   }
-
-  // Sign out
-  Future<void> signOut() async {
-    await _auth.signOut();
-  }
-
-  // Add inside the FirebaseService class
 
   Future<void> updateHabitStatus(String habitId, bool newStatus) async {
     final user = _auth.currentUser;
     if (user == null) return;
 
-    final habitRef = _firestore
+    await _firestore
         .collection('users')
         .doc(user.uid)
         .collection('habits')
-        .doc(habitId);
-
-    await habitRef.update({'isCompleted': newStatus});
+        .doc(habitId)
+        .update({'isCompleted': newStatus});
   }
-
 
   Future<void> deleteHabit(String habitId) async {
     final user = _auth.currentUser;
@@ -110,9 +119,4 @@ class FirebaseService {
         .doc(habitId)
         .delete();
   }
-
-
-
-  // Get current user
-  User? get currentUser => _auth.currentUser;
 }

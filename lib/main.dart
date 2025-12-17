@@ -11,7 +11,6 @@ import 'provider/timer_provider.dart';
 import 'provider/user_provider.dart';
 
 import 'screen/splash_screen.dart';
-import 'screen/home_screen.dart';
 import 'screen/login_screen.dart';
 import 'widget/navbar_widget.dart';
 
