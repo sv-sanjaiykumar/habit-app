@@ -1,39 +1,58 @@
 import 'package:flutter/material.dart';
+import 'package:intern_habit_app/screen/timer_controls.dart';
 import 'package:provider/provider.dart';
 import '../provider/timer_provider.dart';
-import 'timer_controls.dart';
 
 class TimerScreen extends StatelessWidget {
   const TimerScreen({super.key});
 
-  String formatTime(int seconds) {
-    final minutes = seconds ~/ 60;
-    final remainingSeconds = seconds % 60;
-    return '${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
+  String _formatTime(int seconds) {
+    final minutes = (seconds ~/ 60).toString().padLeft(2, '0');
+    final secs = (seconds % 60).toString().padLeft(2, '0');
+    return '$minutes:$secs';
   }
 
   @override
   Widget build(BuildContext context) {
-    final timer = Provider.of<TimerProvider>(context);
-    final textTheme = Theme.of(context).textTheme;
+    final seconds = context.watch<TimerProvider>().seconds;
 
     return Scaffold(
+      backgroundColor: const Color(0xFF0E0E0E),
       appBar: AppBar(
-        automaticallyImplyLeading: false,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         title: const Text('Focus Timer'),
         centerTitle: true,
-        backgroundColor: const Color(0xFF0E0E0E), // Direct use of green color
-        foregroundColor: Colors.white,
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              formatTime(timer.seconds),
-              style: textTheme.displayLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Colors.white, // Matching textTheme color
+            Container(
+              height: 200,
+              width: 200,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: const Color(0xE400DC0E),
+                  width: 4,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xE400DC0E).withOpacity(0.3),
+                    blurRadius: 30,
+                  ),
+                ],
+              ),
+              child: Text(
+                _formatTime(seconds),
+                style: const TextStyle(
+                  fontSize: 38,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  letterSpacing: 1.5,
+                ),
               ),
             ),
             const SizedBox(height: 40),
