@@ -8,7 +8,7 @@ class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
 
   @override
-  State<EditProfileScreen> createState() => _EditProfileScreenState();
+ State<EditProfileScreen> createState() => _EditProfileScreenState();
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
@@ -18,9 +18,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
-    final user = Provider.of<UserProvider>(context, listen: false);
-    _nameController = TextEditingController(text: user.name);
-    _emailController = TextEditingController(text: user.email);
+
+    final user = Provider.of<UserProvider>(
+      context,
+      listen: false,
+    );
+
+    _nameController = TextEditingController(
+      text: user.name,
+    );
+
+    _emailController = TextEditingController(
+      text: user.email,
+    );
   }
 
   @override
@@ -34,35 +44,72 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
 
-    if (name.isNotEmpty && email.isNotEmpty) {
-      final userProvider = Provider.of<UserProvider>(context, listen: false);
-      final user = FirebaseAuth.instance.currentUser;
+    if (name.isEmpty || email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Name and Email cannot be empty",
+          ),
+        ),
+      );
+      return;
+    }
 
-      if (user != null) {
-        try {
-          // Update Firebase Auth email if changed
-          if (email != user.email) {
-            await user.updateEmail(email);
-          }
+    final userProvider = Provider.of<UserProvider>(
+      context,
+      listen: false,
+    );
 
-          // Update Firestore
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(user.uid)
-              .update({'name': name, 'email': email});
+    final user = FirebaseAuth.instance.currentUser;
 
-          // Reload user and refresh provider
-          await user.reload();
-          await userProvider.fetchUserData();
-          await userProvider.loadUserData();
+    if (user != null) {
+      try {
+        // Update email if changed
+        if (email != user.email) {
+          await user.verifyBeforeUpdateEmail(email);
 
-          Navigator.pop(context);
-        } catch (e) {
-          print("Error updating user: $e");
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Failed to update profile. Try again.")),
+            const SnackBar(
+              content: Text(
+                "Verification email sent to your new email address",
+              ),
+            ),
           );
         }
+
+        // Update Firestore user data
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({
+          'name': name,
+          'email': email,
+        });
+
+        // Refresh user data
+        await user.reload();
+        await userProvider.fetchUserData();
+        await userProvider.loadUserData();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              "Profile updated successfully",
+            ),
+          ),
+        );
+
+        Navigator.pop(context);
+      } catch (e) {
+        print("Error updating profile: $e");
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Failed to update profile: $e",
+            ),
+          ),
+        );
       }
     }
   }
@@ -103,7 +150,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             children: [
               TextField(
                 controller: _nameController,
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(
+                  color: Colors.white,
+                ),
                 decoration: InputDecoration(
                   labelText: 'Name',
                   labelStyle: const TextStyle(
@@ -120,7 +169,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               const SizedBox(height: 20),
               TextField(
                 controller: _emailController,
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(
+                  color: Colors.white,
+                ),
                 decoration: InputDecoration(
                   labelText: 'Email',
                   labelStyle: const TextStyle(
@@ -140,7 +191,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: _saveProfile,
-                  icon: const Icon(Icons.save, color: Colors.black),
+                  icon: const Icon(
+                    Icons.save,
+                    color: Colors.black,
+                  ),
                   label: const Text(
                     'Save Changes',
                     style: TextStyle(
@@ -151,7 +205,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xE400DC0E),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
